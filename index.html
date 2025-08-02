@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Chat App</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Auth Screen -->
+        <div id="auth-screen" class="screen">
+            <div class="auth-container">
+                <h1><i class="fas fa-comments"></i> Team Chat</h1>
+                <p class="auth-subtitle">Sign in to start chatting with your team</p>
+                <input type="email" id="email-input" placeholder="Enter your email" required>
+                <input type="text" id="username-input" placeholder="Choose your display name" maxlength="20">
+                <div class="username-requirements">
+                    <small>Username must be 3-20 characters and unique</small>
+                </div>
+                <button id="sign-in-btn">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+                <p class="error-message" id="auth-error"></p>
+            </div>
+        </div>
+
+        <!-- Chat Screen -->
+        <div id="chat-screen" class="screen hidden">
+            <div class="sidebar">
+                <div class="user-header">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <span id="current-username"></span>
+                        <small id="user-status">Online</small>
+                    </div>
+                    <button id="sign-out-btn" title="Sign Out">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+
+                <div class="rooms-section">
+                    <div class="section-header">
+                        <h3>Chat Rooms</h3>
+                        <button id="create-room-btn" title="Create New Room">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="search-container">
+                        <input type="text" id="search-rooms" placeholder="Search rooms...">
+                    </div>
+
+                    <div class="rooms-list" id="rooms-list">
+                        <!-- Rooms will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="online-users-section">
+                    <div class="section-header">
+                        <h3>Online Users</h3>
+                        <span id="online-count">0</span>
+                    </div>
+                    <div class="online-users-list" id="online-users-list">
+                        <!-- Online users will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-area">
+                <div class="chat-header">
+                    <div class="chat-room-info">
+                        <div class="chat-avatar">
+                            <i class="fas fa-hashtag" id="chat-icon"></i>
+                        </div>
+                        <div>
+                            <h3 id="chat-title">Select a chat room</h3>
+                            <small id="chat-subtitle">Join a room to start chatting</small>
+                        </div>
+                    </div>
+                    <div class="chat-actions">
+                        <button id="room-info-btn" title="Room Info" class="hidden">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                        <button id="room-settings-btn" title="Room Settings" class="hidden">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="messages-container" id="messages-container">
+                    <div class="empty-state">
+                        <i class="fas fa-comments"></i>
+                        <p>Select a chat room to start messaging</p>
+                    </div>
+                </div>
+
+                <div class="message-input-container">
+                    <div class="message-input-actions">
+                        <button id="format-bold-btn" title="Bold" class="format-btn">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button id="format-italic-btn" title="Italic" class="format-btn">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button id="format-link-btn" title="Insert Link" class="format-btn">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                    <input type="text" id="message-input" placeholder="Write a message..." disabled>
+                    <button id="send-message-btn" title="Send" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div id="create-room-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Chat Room</h3>
+                <button id="close-create-room-modal" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="new-room-name" placeholder="Room name" maxlength="30">
+                <textarea id="new-room-description" placeholder="Room description (optional)" maxlength="100"></textarea>
+                <button id="create-room-submit-btn">Create Room</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Info Modal -->
+    <div id="room-info-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Room Information</h3>
+                <button id="close-room-info-modal" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="room-info-content">
+                    <!-- Room info will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Scripts -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="javascript/auth.js"></script>
+    <script src="javascript/rooms.js"></script>
+    <script src="javascript/chat.js"></script>
+    <script src="javascript/main.js"></script>
+</body>
+</html>
