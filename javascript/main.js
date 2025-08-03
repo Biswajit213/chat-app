@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showEmptyState();
     setupErrorHandling();
     setupConnectionStatus();
+    setupPageVisibilityHandling();
 });
 
 // Show empty state when no room is selected
@@ -23,7 +24,13 @@ function showEmptyState() {
 
 // Setup error handling
 function setupErrorHandling() {
-    // Handle Firebase connection errors
+    // Handle WebSocket errors
+    wsManager.on('error', (error) => {
+        console.error('WebSocket error:', error);
+        showNotification('Connection error. Please check your internet connection.', 'error');
+    });
+
+    // Handle general application errors
     window.addEventListener('error', (event) => {
         console.error('Application error:', event.error);
         showNotification('An error occurred. Please refresh the page.', 'error');
@@ -40,15 +47,58 @@ function setupErrorHandling() {
 function setupConnectionStatus() {
     const userStatus = document.getElementById('user-status');
     
-    // Listen for Firebase connection state
-    const connectedRef = firebase.ref(firebase.database, '.info/connected');
-    firebase.onValue(connectedRef, (snapshot) => {
-        if (snapshot.val() === true) {
+    // Listen for WebSocket connection state
+    wsManager.on('connected', () => {
+        if (userStatus) {
             userStatus.textContent = 'Online';
             userStatus.className = 'online';
-        } else {
+        }
+    });
+    
+    wsManager.on('disconnected', () => {
+        if (userStatus) {
             userStatus.textContent = 'Offline';
             userStatus.className = 'offline';
+        }
+    });
+}
+
+// Setup page visibility handling for multi-tab support
+function setupPageVisibilityHandling() {
+    // Handle page visibility changes
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            // Page became visible - ensure connection is active
+            if (window.isUserAuthenticated && window.isUserAuthenticated()) {
+                if (!wsManager.getConnectionStatus()) {
+                    console.log('Page became visible, reconnecting WebSocket...');
+                    wsManager.connect().then(() => {
+                        const currentUser = window.getCurrentUser();
+                        if (currentUser) {
+                            wsManager.authenticate(currentUser.uid, currentUser.username);
+                            setTimeout(() => {
+                                wsManager.syncRoom();
+                            }, 500);
+                        }
+                    }).catch(error => {
+                        console.error('Failed to reconnect WebSocket:', error);
+                    });
+                } else {
+                    // Connection exists, just sync room state
+                    setTimeout(() => {
+                        wsManager.syncRoom();
+                    }, 100);
+                }
+            }
+        }
+    });
+    
+    // Handle window focus/blur
+    window.addEventListener('focus', () => {
+        if (window.isUserAuthenticated && window.isUserAuthenticated()) {
+            setTimeout(() => {
+                wsManager.syncRoom();
+            }, 100);
         }
     });
 }

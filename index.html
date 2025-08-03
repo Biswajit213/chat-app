@@ -15,14 +15,52 @@
             <div class="auth-container">
                 <h1><i class="fas fa-comments"></i> Team Chat</h1>
                 <p class="auth-subtitle">Sign in to start chatting with your team</p>
-                <input type="email" id="email-input" placeholder="Enter your email" required>
-                <input type="text" id="username-input" placeholder="Choose your display name" maxlength="20">
-                <div class="username-requirements">
-                    <small>Username must be 3-20 characters and unique</small>
+                
+                <!-- Auth Mode Toggle -->
+                <div class="auth-mode-toggle">
+                    <button id="login-mode-btn" class="mode-btn active">Login</button>
+                    <button id="register-mode-btn" class="mode-btn">Register</button>
                 </div>
-                <button id="sign-in-btn">
-                    <i class="fas fa-sign-in-alt"></i> Sign In
-                </button>
+
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form">
+                    <input type="email" id="login-email" placeholder="Enter your email" required>
+                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                    <button type="submit" id="login-btn">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </button>
+                    <button type="button" id="forgot-password-btn" class="text-btn">
+                        Forgot Password?
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="auth-form hidden">
+                    <input type="email" id="register-email" placeholder="Enter your email" required>
+                    <input type="text" id="register-username" placeholder="Choose your display name" maxlength="20" required>
+                    <input type="password" id="register-password" placeholder="Create a password" required>
+                    <input type="password" id="register-confirm-password" placeholder="Confirm password" required>
+                    <div class="password-requirements">
+                        <small>Password must be at least 6 characters</small>
+                    </div>
+                    <div class="username-requirements">
+                        <small>Username must be 3-20 characters and unique</small>
+                    </div>
+                    <button type="submit" id="register-btn">
+                        <i class="fas fa-user-plus"></i> Register
+                    </button>
+                </form>
+
+                <!-- Quick Sign In (Anonymous) -->
+                <div class="quick-signin">
+                    <div class="divider">
+                        <span>or</span>
+                    </div>
+                    <button id="quick-signin-btn" class="quick-btn">
+                        <i class="fas fa-user-secret"></i> Quick Sign In (Anonymous)
+                    </button>
+                </div>
+
                 <p class="error-message" id="auth-error"></p>
             </div>
         </div>
@@ -154,8 +192,27 @@
         </div>
     </div>
 
+    <!-- Password Reset Modal -->
+    <div id="password-reset-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reset Password</h3>
+                <button id="close-password-reset-modal" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Enter your email address and we'll send you a link to reset your password.</p>
+                <input type="email" id="reset-email" placeholder="Enter your email" required>
+                <button id="send-reset-email-btn">Send Reset Email</button>
+                <p class="reset-message" id="reset-message"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- App Scripts -->
     <script type="module" src="firebase-config.js"></script>
+    <script src="javascript/websocket.js"></script>
     <script src="javascript/auth.js"></script>
     <script src="javascript/rooms.js"></script>
     <script src="javascript/chat.js"></script>

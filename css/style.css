@@ -88,6 +88,103 @@ body {
     border-color: var(--primary-color);
 }
 
+/* Auth Mode Toggle */
+.auth-mode-toggle {
+    display: flex;
+    margin-bottom: 1.5rem;
+    background: var(--light-color);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.mode-btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.mode-btn:hover:not(.active) {
+    background: rgba(0, 123, 255, 0.1);
+}
+
+/* Auth Forms */
+.auth-form {
+    margin-bottom: 1rem;
+}
+
+.auth-form.hidden {
+    display: none;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.auth-form button {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.auth-form button:hover {
+    background: #0056b3;
+}
+
+.text-btn {
+    background: transparent !important;
+    color: var(--primary-color) !important;
+    border: none !important;
+    text-decoration: underline;
+    font-size: 0.9rem !important;
+    padding: 0.5rem !important;
+    margin: 0 !important;
+}
+
+.text-btn:hover {
+    color: #0056b3 !important;
+    background: transparent !important;
+}
+
+/* Password Requirements */
+.password-requirements {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.password-requirements small {
+    color: var(--text-light);
+    font-size: 0.8rem;
+}
+
 .username-requirements {
     margin-bottom: 1rem;
     text-align: left;
@@ -96,6 +193,70 @@ body {
 .username-requirements small {
     color: var(--text-light);
     font-size: 0.8rem;
+}
+
+/* Quick Sign In */
+.quick-signin {
+    margin-top: 1.5rem;
+}
+
+.divider {
+    position: relative;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.divider span {
+    background: white;
+    padding: 0 1rem;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.quick-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.quick-btn:hover {
+    background: #5a6268;
+}
+
+/* Reset Message */
+.reset-message {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.reset-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.reset-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 
 .auth-container button {
@@ -122,6 +283,17 @@ body {
     color: var(--danger-color);
     margin-top: 1rem;
     font-size: 0.9rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    display: none;
+}
+
+.error-message.success {
+    color: var(--success-color);
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
 }
 
 /* Chat Screen Layout */
@@ -175,6 +347,14 @@ body {
 .user-info small {
     color: rgba(255, 255, 255, 0.7);
     font-size: 0.8rem;
+}
+
+.user-info small.online {
+    color: #4caf50;
+}
+
+.user-info small.offline {
+    color: #f44336;
 }
 
 #sign-out-btn {

@@ -16,7 +16,7 @@ const onlineUsersList = document.getElementById('online-users-list');
 function initChat() {
     setupChatEventListeners();
     setupMessageFormatting();
-    setupFirebaseListeners();
+    setupWebSocketListeners();
 }
 
 // Setup event listeners for chat interactions
@@ -38,16 +38,17 @@ function setupChatEventListeners() {
     formatLinkBtn.addEventListener('click', insertLink);
 }
 
-// Setup Firebase listeners for real-time updates
-function setupFirebaseListeners() {
-    // Listen for online users changes
-    const usersRef = firebase.ref(firebase.database, 'users');
-    firebase.onValue(usersRef, (snapshot) => {
-        const usersData = snapshot.val();
-        if (usersData) {
-            onlineUsers = Object.values(usersData).filter(user => user.isOnline);
-            renderOnlineUsers();
-        }
+// Setup WebSocket listeners for real-time updates
+function setupWebSocketListeners() {
+    // Listen for new messages
+    wsManager.on('new_message', (message) => {
+        addMessage(message);
+    });
+
+    // Listen for online users updates
+    wsManager.on('online_users', (data) => {
+        onlineUsers = data.users || [];
+        renderOnlineUsers();
     });
 }
 
@@ -106,7 +107,7 @@ function insertLink() {
 }
 
 // Send message
-async function sendMessage() {
+function sendMessage() {
     const content = messageInput.value.trim();
     const currentUser = getCurrentUser();
     const currentRoom = getCurrentRoom();
@@ -120,24 +121,8 @@ async function sendMessage() {
         messageInput.disabled = true;
         sendMessageBtn.disabled = true;
 
-        const messageData = {
-            content: content,
-            sender: currentUser.uid,
-            senderName: currentUser.username,
-            timestamp: Date.now(),
-            roomId: currentRoom.id
-        };
-
-        // Add message to Firebase
-        const messagesRef = firebase.ref(firebase.database, `messages/${currentRoom.id}`);
-        const newMessageRef = firebase.push(messagesRef);
-        await firebase.set(newMessageRef, messageData);
-
-        // Update room message count
-        const roomRef = firebase.ref(firebase.database, `rooms/${currentRoom.id}/messageCount`);
-        const snapshot = await firebase.get(roomRef);
-        const currentCount = snapshot.val() || 0;
-        await firebase.set(roomRef, currentCount + 1);
+        // Send message via WebSocket
+        wsManager.sendMessage(content);
 
         // Clear input
         messageInput.value = '';
@@ -154,59 +139,19 @@ async function sendMessage() {
 }
 
 // Load room messages
-async function loadRoomMessages(roomId) {
+function loadRoomMessages(messages) {
     try {
         clearMessages();
         
-        const messagesRef = firebase.ref(firebase.database, `messages/${roomId}`);
-        const snapshot = await firebase.get(messagesRef);
-        
-        if (snapshot.exists()) {
-            const messagesData = snapshot.val();
-            const roomMessages = Object.entries(messagesData)
-                .map(([id, message]) => ({ id, ...message }))
-                .sort((a, b) => a.timestamp - b.timestamp);
-            
-            messages = roomMessages;
+        if (messages && messages.length > 0) {
+            messages = messages.sort((a, b) => a.timestamp - b.timestamp);
             renderMessages();
         }
-        
-        // Listen for new messages in this room
-        setupMessageListener(roomId);
         
     } catch (error) {
         console.error('Error loading messages:', error);
         showNotification('Failed to load messages', 'error');
     }
-}
-
-// Setup real-time message listener
-function setupMessageListener(roomId) {
-    // Remove previous listener if any
-    if (window.currentMessageListener) {
-        firebase.off(firebase.ref(firebase.database, `messages/${roomId}`), 'child_added');
-    }
-    
-    const messagesRef = firebase.ref(firebase.database, `messages/${roomId}`);
-    firebase.onValue(messagesRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const messagesData = snapshot.val();
-            const roomMessages = Object.entries(messagesData)
-                .map(([id, message]) => ({ id, ...message }))
-                .sort((a, b) => a.timestamp - b.timestamp);
-            
-            // Only add new messages
-            const newMessages = roomMessages.filter(msg => 
-                !messages.find(existing => existing.id === msg.id)
-            );
-            
-            messages = roomMessages;
-            
-            newMessages.forEach(message => {
-                addMessage(message);
-            });
-        }
-    });
 }
 
 // Add message to UI

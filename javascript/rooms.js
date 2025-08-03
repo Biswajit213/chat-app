@@ -24,8 +24,7 @@ const chatIcon = document.getElementById('chat-icon');
 // Initialize rooms
 function initRooms() {
     setupRoomEventListeners();
-    setupFirebaseListeners();
-    loadDefaultRooms();
+    setupWebSocketListeners();
 }
 
 // Setup event listeners for room interactions
@@ -71,77 +70,68 @@ function setupRoomEventListeners() {
     });
 }
 
-// Setup Firebase listeners for real-time updates
-function setupFirebaseListeners() {
-    // Listen for rooms changes
-    const roomsRef = firebase.ref(firebase.database, 'rooms');
-    firebase.onValue(roomsRef, (snapshot) => {
-        const roomsData = snapshot.val();
-        if (roomsData) {
-            rooms = Object.entries(roomsData).map(([id, room]) => ({
-                id,
-                ...room
-            }));
-        } else {
-            rooms = [];
-        }
+// Setup WebSocket listeners for real-time updates
+function setupWebSocketListeners() {
+    // Listen for room list updates
+    wsManager.on('room_list', (data) => {
+        rooms = data.rooms || [];
         renderRooms();
     });
 
-    // Listen for online users changes
-    const usersRef = firebase.ref(firebase.database, 'users');
-    firebase.onValue(usersRef, (snapshot) => {
-        const usersData = snapshot.val();
-        if (usersData) {
-            const onlineUsers = Object.values(usersData).filter(user => user.isOnline);
-            updateOnlineCount(onlineUsers.length);
+    // Listen for room created
+    wsManager.on('room_created', (data) => {
+        if (data.room) {
+            rooms.push(data.room);
+            renderRooms();
+            showNotification('Room created successfully!', 'success');
         }
+    });
+
+    // Listen for room joined
+    wsManager.on('room_joined', (data) => {
+        if (data.room) {
+            currentRoom = data.room;
+            updateRoomUI();
+            enableChatInput();
+        }
+    });
+
+    // Listen for room messages
+    wsManager.on('room_messages', (data) => {
+        if (data.messages && typeof loadRoomMessages === 'function') {
+            loadRoomMessages(data.messages);
+        }
+    });
+
+    // Listen for user joined room
+    wsManager.on('user_joined', (data) => {
+        if (currentRoom && data.roomId === currentRoom.id) {
+            showSystemMessage(`${data.username} joined the room`);
+        }
+    });
+
+    // Listen for user left room
+    wsManager.on('user_left', (data) => {
+        if (currentRoom && data.roomId === currentRoom.id) {
+            showSystemMessage(`${data.username} left the room`);
+        }
+    });
+
+    // Listen for online users updates
+    wsManager.on('online_users', (data) => {
+        const onlineCount = data.users ? data.users.length : 0;
+        updateOnlineCount(onlineCount);
     });
 }
 
 // Load default rooms if none exist
-async function loadDefaultRooms() {
-    try {
-        const roomsRef = firebase.ref(firebase.database, 'rooms');
-        const snapshot = await firebase.get(roomsRef);
-        
-        if (!snapshot.exists()) {
-            const defaultRooms = {
-                general: {
-                    name: 'General',
-                    description: 'General discussion room',
-                    createdBy: 'system',
-                    createdAt: Date.now(),
-                    participants: {},
-                    messageCount: 0
-                },
-                random: {
-                    name: 'Random',
-                    description: 'Random topics and fun conversations',
-                    createdBy: 'system',
-                    createdAt: Date.now(),
-                    participants: {},
-                    messageCount: 0
-                },
-                help: {
-                    name: 'Help',
-                    description: 'Get help and ask questions',
-                    createdBy: 'system',
-                    createdAt: Date.now(),
-                    participants: {},
-                    messageCount: 0
-                }
-            };
-
-            await firebase.set(roomsRef, defaultRooms);
-        }
-    } catch (error) {
-        console.error('Error loading default rooms:', error);
-    }
+function loadDefaultRooms() {
+    // Default rooms are created by the WebSocket server
+    // This function is no longer needed as the server handles it
 }
 
 // Handle create room
-async function handleCreateRoom() {
+function handleCreateRoom() {
     const name = newRoomName.value.trim();
     const description = newRoomDescription.value.trim();
 
@@ -159,31 +149,17 @@ async function handleCreateRoom() {
         createRoomSubmitBtn.disabled = true;
         createRoomSubmitBtn.textContent = 'Creating...';
 
-        const currentUser = getCurrentUser();
-        const roomData = {
-            name: name,
-            description: description || '',
-            createdBy: currentUser.uid,
-            createdAt: Date.now(),
-            participants: {},
-            messageCount: 0
-        };
-
-        const roomsRef = firebase.ref(firebase.database, 'rooms');
-        const newRoomRef = firebase.push(roomsRef);
-        await firebase.set(newRoomRef, roomData);
+        // Send create room request via WebSocket
+        wsManager.createRoom(name, description);
 
         // Close modal and clear form
         createRoomModal.classList.add('hidden');
         newRoomName.value = '';
         newRoomDescription.value = '';
 
-        showNotification('Room created successfully!', 'success');
-
     } catch (error) {
         console.error('Error creating room:', error);
         showNotification('Failed to create room. Please try again.', 'error');
-    } finally {
         createRoomSubmitBtn.disabled = false;
         createRoomSubmitBtn.textContent = 'Create Room';
     }
@@ -245,45 +221,18 @@ function createRoomElement(room) {
 }
 
 // Join a room
-async function joinRoom(roomId) {
+function joinRoom(roomId) {
     try {
         const currentUser = getCurrentUser();
         if (!currentUser) return;
 
         // Leave current room if any
         if (currentRoom) {
-            await leaveCurrentRoom();
+            leaveCurrentRoom();
         }
 
-        // Get room data
-        const roomRef = firebase.ref(firebase.database, `rooms/${roomId}`);
-        const snapshot = await firebase.get(roomRef);
-        
-        if (!snapshot.exists()) {
-            showNotification('Room not found', 'error');
-            return;
-        }
-
-        const roomData = snapshot.val();
-        currentRoom = { id: roomId, ...roomData };
-
-        // Add user to room participants
-        const participantRef = firebase.ref(firebase.database, `rooms/${roomId}/participants/${currentUser.uid}`);
-        await firebase.set(participantRef, {
-            username: currentUser.username,
-            joinedAt: Date.now()
-        });
-
-        // Update UI
-        updateRoomUI();
-        enableChatInput();
-
-        // Load room messages
-        if (typeof loadRoomMessages === 'function') {
-            loadRoomMessages(roomId);
-        }
-
-        showNotification(`Joined ${roomData.name}`, 'success');
+        // Join room via WebSocket
+        wsManager.joinRoom(roomId);
 
     } catch (error) {
         console.error('Error joining room:', error);
@@ -292,14 +241,13 @@ async function joinRoom(roomId) {
 }
 
 // Leave current room
-async function leaveCurrentRoom() {
+function leaveCurrentRoom() {
     if (!currentRoom) return;
 
     try {
         const currentUser = getCurrentUser();
         if (currentUser) {
-            const participantRef = firebase.ref(firebase.database, `rooms/${currentRoom.id}/participants/${currentUser.uid}`);
-            await firebase.set(participantRef, null);
+            wsManager.leaveRoom(currentRoom.id);
         }
     } catch (error) {
         console.error('Error leaving room:', error);
@@ -380,6 +328,8 @@ function updateOnlineCount(count) {
 function enableRooms() {
     createRoomBtn.disabled = false;
     searchRooms.disabled = false;
+    // Get rooms list from WebSocket server
+    wsManager.getRooms();
 }
 
 // Disable rooms functionality
